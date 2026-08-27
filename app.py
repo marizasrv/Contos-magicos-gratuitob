@@ -1,5 +1,6 @@
 import streamlit as st
 from huggingface_hub import InferenceClient
+from gtts import gTTS
 from io import BytesIO
 import random
 import unicodedata
@@ -24,7 +25,7 @@ st.write(
 
 
 # ==========================================
-# TOKEN
+# TOKEN HUGGING FACE
 # ==========================================
 
 try:
@@ -45,7 +46,7 @@ client = InferenceClient(
 
 
 # ==========================================
-# LIMPAR TEXTO
+# LIMPAR TEXTO PARA IMAGENS
 # ==========================================
 
 def limpar_texto(texto):
@@ -73,7 +74,7 @@ def limpar_texto(texto):
 
 
 # ==========================================
-# HISTORIA
+# CRIAR HISTORIA
 # ==========================================
 
 def criar_historia(personagem, tema, quantidade):
@@ -109,7 +110,6 @@ def criar_historia(personagem, tema, quantidade):
     for numero in range(quantidade):
 
         if numero == 0:
-
             texto = (
                 f"Era uma vez {personagem}, "
                 f"uma menina curiosa que entrou em uma floresta encantada. "
@@ -117,15 +117,12 @@ def criar_historia(personagem, tema, quantidade):
             )
 
         elif numero == quantidade - 1:
-
             texto = random.choice(finais)
 
         elif numero % 3 == 0:
-
             texto = random.choice(desafios)
 
         else:
-
             texto = random.choice(acontecimentos)
 
         cenas.append(texto)
@@ -134,26 +131,26 @@ def criar_historia(personagem, tema, quantidade):
 
 
 # ==========================================
-# FALAS
+# CRIAR FALAS
 # ==========================================
 
 def criar_fala(personagem, numero):
 
     falas = [
-        f"{personagem}: Que lugar lindo! O que sera que existe aqui?",
-        f"{personagem}: Eu vou descobrir esse misterio!",
-        f"{personagem}: Uau! Isso parece magico!",
-        f"{personagem}: Nao vou desistir. Vou continuar.",
-        f"{personagem}: Nao tenha medo. Eu vou ajudar voce!",
-        f"{personagem}: Acho que estou perto de descobrir o segredo.",
-        f"{personagem}: Conseguimos! Que aventura maravilhosa!"
+        f"Que lugar lindo! O que sera que existe aqui?",
+        f"Eu vou descobrir esse misterio!",
+        f"Uau! Isso parece magico!",
+        f"Eu nao vou desistir. Vou continuar!",
+        f"Nao tenha medo. Eu vou ajudar voce!",
+        f"Acho que estou perto de descobrir o segredo.",
+        f"Conseguimos! Que aventura maravilhosa!"
     ]
 
     return falas[(numero - 1) % len(falas)]
 
 
 # ==========================================
-# MOVIMENTO
+# MOVIMENTO PARA VIDEO
 # ==========================================
 
 def criar_movimento(numero):
@@ -168,22 +165,31 @@ def criar_movimento(numero):
         "Camera se afasta mostrando toda a floresta encantada."
     ]
 
-    return movimentos[(numero - 1) % len(movimentos)]
+    return movimentos[
+        (numero - 1) % len(movimentos)
+    ]
 
 
 # ==========================================
-# GERAR AUDIO
+# GERAR AUDIO MP3
 # ==========================================
 
 def gerar_audio(texto):
 
-    texto_limpo = limpar_texto(texto)
+    audio_buffer = BytesIO()
 
-    audio = client.text_to_speech(
-        text=texto_limpo
+    voz = gTTS(
+        text=texto,
+        lang="pt",
+        tld="com.br",
+        slow=False
     )
 
-    return audio
+    voz.write_to_fp(audio_buffer)
+
+    audio_buffer.seek(0)
+
+    return audio_buffer.getvalue()
 
 
 # ==========================================
@@ -210,8 +216,9 @@ def gerar_imagem(
         f"Main character named {personagem_limpo}. "
         f"Character appearance: {descricao_limpa}. "
         "IMPORTANT: keep exactly the same character appearance, "
-        "same hairstyle, same hair color, same eyes, same face, "
-        "same dress, same shoes and same age in every scene. "
+        "same hairstyle, same hair color, same eyes, "
+        "same face, same dress, same shoes and same age "
+        "in every scene. "
         f"Story theme: {tema_limpo}. "
         f"Scene {numero}: {cena_limpa}. "
         "Beautiful magical fairy tale environment. "
@@ -245,7 +252,7 @@ def gerar_imagem(
 
 
 # ==========================================
-# CAPA
+# GERAR CAPA
 # ==========================================
 
 def gerar_capa(
@@ -267,7 +274,7 @@ def gerar_capa(
         f"Story theme: {tema_limpo}. "
         "Same young child character from the story. "
         "Character centered in a magical enchanted forest. "
-        "Glowing lights and fantasy castle. "
+        "Glowing magical lights and fantasy castle. "
         "Colorful cinematic lighting. "
         "Animated children's movie style. "
         "Wide landscape 16:9 YouTube thumbnail. "
@@ -374,7 +381,9 @@ if st.button(
 
             try:
 
-                with st.spinner("Criando capa..."):
+                with st.spinner(
+                    "Criando capa..."
+                ):
 
                     capa = gerar_capa(
                         personagem,
@@ -395,7 +404,9 @@ if st.button(
                     format="PNG"
                 )
 
-                dados_capa = buffer_capa.getvalue()
+                dados_capa = (
+                    buffer_capa.getvalue()
+                )
 
                 arquivo_zip.writestr(
                     "capa_youtube.png",
@@ -403,7 +414,7 @@ if st.button(
                 )
 
                 st.download_button(
-                    "⬇️ Baixar capa do YouTube",
+                    label="⬇️ Baixar capa do YouTube",
                     data=dados_capa,
                     file_name="capa_youtube.png",
                     mime="image/png"
@@ -428,13 +439,16 @@ if st.button(
             ):
 
                 st.markdown("---")
-                st.header(f"🎬 Cena {numero}")
+                st.header(
+                    f"🎬 Cena {numero}"
+                )
 
                 # ==============================
                 # NARRADORA
                 # ==============================
 
                 st.subheader("🎙️ Narradora")
+
                 st.write(cena)
 
                 try:
@@ -443,16 +457,17 @@ if st.button(
                         "Criando voz da narradora..."
                     ):
 
-                        audio_narradora = gerar_audio(
-                            cena
+                        audio_narradora = (
+                            gerar_audio(cena)
                         )
 
                     st.audio(
-                        audio_narradora
+                        audio_narradora,
+                        format="audio/mp3"
                     )
 
                     arquivo_zip.writestr(
-                        f"narradora_cena_{numero}.flac",
+                        f"narradora_cena_{numero}.mp3",
                         audio_narradora
                     )
 
@@ -463,9 +478,9 @@ if st.button(
                         ),
                         data=audio_narradora,
                         file_name=(
-                            f"narradora_cena_{numero}.flac"
+                            f"narradora_cena_{numero}.mp3"
                         ),
-                        mime="audio/flac",
+                        mime="audio/mpeg",
                         key=f"narradora_{numero}"
                     )
 
@@ -480,7 +495,7 @@ if st.button(
 
 
                 # ==============================
-                # FALA
+                # PERSONAGEM
                 # ==============================
 
                 fala = criar_fala(
@@ -488,7 +503,10 @@ if st.button(
                     numero
                 )
 
-                st.subheader("💬 Personagem")
+                st.subheader(
+                    f"💬 {personagem}"
+                )
+
                 st.write(fala)
 
                 try:
@@ -497,16 +515,17 @@ if st.button(
                         "Criando voz da personagem..."
                     ):
 
-                        audio_personagem = gerar_audio(
-                            fala
+                        audio_personagem = (
+                            gerar_audio(fala)
                         )
 
                     st.audio(
-                        audio_personagem
+                        audio_personagem,
+                        format="audio/mp3"
                     )
 
                     arquivo_zip.writestr(
-                        f"fala_cena_{numero}.flac",
+                        f"fala_cena_{numero}.mp3",
                         audio_personagem
                     )
 
@@ -517,9 +536,9 @@ if st.button(
                         ),
                         data=audio_personagem,
                         file_name=(
-                            f"fala_cena_{numero}.flac"
+                            f"fala_cena_{numero}.mp3"
                         ),
-                        mime="audio/flac",
+                        mime="audio/mpeg",
                         key=f"fala_{numero}"
                     )
 
@@ -555,7 +574,8 @@ if st.button(
                 try:
 
                     with st.spinner(
-                        f"Gerando imagem da cena {numero}..."
+                        f"Gerando imagem "
+                        f"da cena {numero}..."
                     ):
 
                         imagem = gerar_imagem(
@@ -579,7 +599,9 @@ if st.button(
                         format="PNG"
                     )
 
-                    dados_imagem = buffer.getvalue()
+                    dados_imagem = (
+                        buffer.getvalue()
+                    )
 
                     arquivo_zip.writestr(
                         f"cena_{numero}.png",
@@ -592,7 +614,9 @@ if st.button(
                             f"da cena {numero}"
                         ),
                         data=dados_imagem,
-                        file_name=f"cena_{numero}.png",
+                        file_name=(
+                            f"cena_{numero}.png"
+                        ),
                         mime="image/png",
                         key=f"imagem_{numero}"
                     )
@@ -608,7 +632,7 @@ if st.button(
 
 
                 # ==============================
-                # TEXTOS
+                # ROTEIRO
                 # ==============================
 
                 historia_completa += (
@@ -620,7 +644,7 @@ if st.button(
                     f"CENA {numero}\n\n"
                     f"NARRADORA:\n"
                     f"{cena}\n\n"
-                    f"PERSONAGEM:\n"
+                    f"{personagem.upper()}:\n"
                     f"{fala}\n\n"
                     f"MOVIMENTO:\n"
                     f"{movimento}\n\n"
@@ -633,14 +657,19 @@ if st.button(
         # ======================================
 
         st.markdown("---")
-        st.header("📥 Baixar projeto")
+
+        st.header(
+            "📥 Baixar projeto"
+        )
 
         arquivos_zip.seek(0)
 
         st.download_button(
             label="📦 Baixar projeto completo",
             data=arquivos_zip.getvalue(),
-            file_name="conto_magico_completo.zip",
+            file_name=(
+                "conto_magico_completo.zip"
+            ),
             mime="application/zip",
             use_container_width=True
         )
