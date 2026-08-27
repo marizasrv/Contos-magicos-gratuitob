@@ -2,6 +2,11 @@ import streamlit as st
 from huggingface_hub import InferenceClient
 from io import BytesIO
 import random
+import re
+
+# ==========================================
+# CONFIGURAÇÃO DA PÁGINA
+# ==========================================
 
 st.set_page_config(
     page_title="Contos Mágicos IA",
@@ -10,173 +15,298 @@ st.set_page_config(
 )
 
 st.title("✨ Contos Mágicos IA")
-st.write("Crie histórias infantis com imagens para cada cena.")
+st.write("Crie histórias infantis mágicas com cenas e imagens.")
 
-# Chave guardada nos Secrets do Streamlit
+# ==========================================
+# PEGAR TOKEN DO HUGGING FACE
+# ==========================================
+
 try:
     HF_TOKEN = st.secrets["HF_TOKEN"]
 except Exception:
-    st.error("A chave HF_TOKEN não foi encontrada nos Secrets do Streamlit.")
+    st.error(
+        "A chave HF_TOKEN não foi encontrada nos Secrets do Streamlit."
+    )
     st.stop()
 
+# ==========================================
+# CLIENTE HUGGING FACE
+# ==========================================
+
 client = InferenceClient(
-    provider="auto",
+    provider="hf-inference",
     api_key=HF_TOKEN
 )
 
-nome = st.text_input(
+# ==========================================
+# FUNÇÃO PARA GERAR IMAGEM
+# ==========================================
+
+def gerar_imagem(descricao):
+
+    # Evita caracteres que podem causar problemas
+    descricao_limpa = descricao.replace("•", "-")
+    descricao_limpa = descricao.replace("—", "-")
+    descricao_limpa = descricao.replace("–", "-")
+    descricao_limpa = descricao.replace("…", "...")
+
+    prompt = f"""
+Children's fairy tale illustration.
+Cute child character.
+Magical fantasy environment.
+Colorful cinematic lighting.
+Family friendly.
+No text.
+No letters.
+No watermark.
+YouTube story illustration.
+
+Scene:
+{descricao_limpa}
+"""
+
+    try:
+
+        imagem = client.text_to_image(
+            prompt,
+            model="black-forest-labs/FLUX.1-schnell"
+        )
+
+        return imagem
+
+    except Exception as erro:
+
+        st.warning("Não foi possível gerar esta imagem.")
+        st.caption(str(erro))
+
+        return None
+
+
+# ==========================================
+# FUNÇÃO PARA CRIAR HISTÓRIA
+# ==========================================
+
+def criar_historia(personagem, tipo, tema, quantidade):
+
+    introducoes = [
+        f"Era uma vez {personagem}, uma criança muito curiosa.",
+        f"Em um lugar mágico vivia {personagem}.",
+        f"Certa manhã, {personagem} descobriu que algo extraordinário estava para acontecer."
+    ]
+
+    acontecimentos = [
+        "Uma luz misteriosa apareceu entre as árvores.",
+        "Uma pequena fada surgiu trazendo uma mensagem secreta.",
+        "Uma porta mágica apareceu onde antes não havia nada.",
+        "Um animal encantado pediu ajuda.",
+        "Um caminho brilhante surgiu no meio da floresta.",
+        "Um castelo escondido apareceu entre as nuvens.",
+        "Um espelho mágico começou a brilhar.",
+        "Uma estrela caiu bem perto do personagem.",
+        "Uma chave dourada apareceu misteriosamente.",
+        "Uma voz suave chamou de dentro da floresta."
+    ]
+
+    desafios = [
+        "Para continuar a aventura, era preciso encontrar uma chave encantada.",
+        "O caminho estava protegido por um enigma mágico.",
+        "Uma ponte desapareceu e era necessário descobrir outra passagem.",
+        "Um feitiço havia escondido o caminho de volta.",
+        "O personagem precisava ajudar um novo amigo antes de continuar."
+    ]
+
+    finais = [
+        "Depois de uma grande aventura, tudo terminou bem e uma nova amizade nasceu.",
+        "O mistério foi resolvido e todos comemoraram felizes.",
+        "A magia voltou ao reino e todos viveram uma noite inesquecível.",
+        "O personagem voltou para casa levando uma lembrança mágica daquela aventura."
+    ]
+
+    cenas = []
+
+    for numero in range(quantidade):
+
+        if numero == 0:
+
+            texto = (
+                random.choice(introducoes)
+                + " "
+                + f"A aventura começou com o tema: {tema}."
+            )
+
+        elif numero == quantidade - 1:
+
+            texto = random.choice(finais)
+
+        elif numero % 3 == 0:
+
+            texto = random.choice(desafios)
+
+        else:
+
+            texto = random.choice(acontecimentos)
+
+        cenas.append(texto)
+
+    return cenas
+
+
+# ==========================================
+# FORMULÁRIO
+# ==========================================
+
+st.subheader("🧚 Crie sua história")
+
+personagem = st.text_input(
     "Nome do personagem principal",
-    placeholder="Exemplo: Luna"
+    value="Luna"
 )
 
 tipo = st.selectbox(
     "Escolha o tipo de história",
     [
-        "Conto de fadas",
         "Aventura mágica",
+        "Conto de fadas",
         "Mistério infantil",
-        "Conto sombrio infantil",
-        "História para dormir"
+        "Fantasia",
+        "História encantada"
     ]
 )
 
 tema = st.text_input(
     "Tema da história",
-    placeholder="Exemplo: Luna e o espelho mágico"
+    value="Luna e o espelho mágico"
 )
 
-numero_cenas = st.slider(
+quantidade = st.slider(
     "Quantidade de cenas",
-    min_value=5,
+    min_value=3,
     max_value=12,
-    value=8
+    value=6
 )
 
-def criar_historia(personagem, tema_historia, estilo, quantidade):
-    lugares = [
-        "uma floresta encantada",
-        "um castelo escondido entre as nuvens",
-        "uma vila iluminada pela lua",
-        "um jardim cheio de flores mágicas",
-        "uma montanha onde vivem pequenas fadas"
-    ]
+# ==========================================
+# BOTÃO
+# ==========================================
 
-    amigos = [
-        "uma pequena fada",
-        "um coelhinho falante",
-        "uma estrela brilhante",
-        "um dragãozinho amigável",
-        "uma coruja sábia"
-    ]
+if st.button(
+    "✨ Criar história e imagens",
+    use_container_width=True
+):
 
-    lugar = tema_historia if tema_historia else random.choice(lugares)
-    amigo = random.choice(amigos)
+    if not personagem.strip():
 
-    cenas = [
-        f"Era uma vez {personagem}, uma criança curiosa que vivia perto de {lugar}.",
-        f"Certa noite, {personagem} viu uma luz misteriosa brilhando ao longe.",
-        f"No caminho, {personagem} encontrou {amigo}, que decidiu acompanhar a aventura.",
-        f"Juntos descobriram uma passagem secreta para um mundo cheio de magia.",
-        f"{personagem} encontrou um objeto mágico escondido entre árvores brilhantes.",
-        f"Um pequeno desafio apareceu, mas {personagem} decidiu enfrentá-lo com coragem.",
-        f"Com a ajuda de {amigo}, o mistério começou a ser resolvido.",
-        f"A magia voltou a iluminar todo o lugar.",
-        f"{personagem} percebeu que amizade e coragem eram a verdadeira magia.",
-        f"Depois da aventura, {personagem} voltou feliz para casa. Fim."
-    ]
+        st.warning("Digite o nome do personagem.")
 
-    while len(cenas) < quantidade:
-        cenas.insert(
-            -1,
-            f"{personagem} continuou explorando o mundo encantado e encontrou uma nova surpresa."
-        )
+    elif not tema.strip():
 
-    return cenas[:quantidade]
-
-
-def gerar_imagem(def gerar_imagem(cena, personagem):
-    cena = cena.replace("…", "...").replace("—", "-").replace("–", "-")
-    personagem = personagem.replace("…", "...").replace("—", "-").replace("–", "-")
-
-    prompt = (
-        f"Children's fairy tale illustration. "
-        f"Main character: {personagem}, a cute young child. "
-        f"Scene: {cena}. "
-    )
-
-    imagem = client.text_to_image(
-        prompt,
-        model="black-forest-labs/FLUX.1-schnell",
-        width=1024,
-        height=576
-    )
-
-    return imagem, prompt
-
-
-if st.button("✨ Criar história e imagens", use_container_width=True):
-
-    if not nome:
-        st.warning("Digite o nome do personagem principal.")
+        st.warning("Digite o tema da história.")
 
     else:
-        cenas = criar_historia(
-            nome,
-            tema,
-            tipo,
-            numero_cenas
-        )
 
-        st.success("História criada! Agora vamos gerar as imagens.")
+        with st.spinner("Criando sua história..."):
+
+            cenas = criar_historia(
+                personagem,
+                tipo,
+                tema,
+                quantidade
+            )
+
+        st.success(
+            "História criada! Agora vamos gerar as imagens."
+        )
 
         historia_completa = ""
 
-        for i, cena in enumerate(cenas, 1):
+        # ==================================
+        # MOSTRAR CENAS
+        # ==================================
 
-            st.subheader(f"🎬 Cena {i}")
+        for numero, cena in enumerate(cenas, start=1):
+
+            st.markdown("---")
+
+            st.subheader(f"🎬 Cena {numero}")
+
             st.write(cena)
 
-            historia_completa += f"Cena {i}\n{cena}\n\n"
+            historia_completa += (
+                f"CENA {numero}\n"
+                f"{cena}\n\n"
+            )
 
-            with st.spinner(f"🎨 Criando imagem da cena {i}..."):
+            # ==============================
+            # GERAR IMAGEM
+            # ==============================
 
-                try:
-                    imagem, prompt = gerar_imagem(cena, nome)
+            with st.spinner(
+                f"Gerando imagem da cena {numero}..."
+            ):
 
-                    st.image(
-                        imagem,
-                        caption=f"Cena {i}",
-                        use_container_width=True
-                    )
+                imagem = gerar_imagem(
+                    f"""
+                    Character: {personagem}.
+                    Story type: {tipo}.
+                    Story theme: {tema}.
+                    Scene number: {numero}.
+                    Scene description: {cena}.
+                    """
+                )
 
-                    buffer = BytesIO()
-                    imagem.save(buffer, format="PNG")
-                    dados_imagem = buffer.getvalue()
+            if imagem is not None:
 
-                    st.download_button(
-                        f"📥 Baixar imagem da cena {i}",
-                        data=dados_imagem,
-                        file_name=f"cena_{i}.png",
-                        mime="image/png",
-                        key=f"download_{i}"
-                    )
+                st.image(
+                    imagem,
+                    caption=f"Cena {numero}",
+                    use_container_width=True
+                )
 
-                    with st.expander("🎨 Ver prompt da imagem"):
-                        st.write(prompt)
+                # ==========================
+                # DOWNLOAD DA IMAGEM
+                # ==========================
 
-                except Exception as erro:
-                    st.error(
-                        f"Não foi possível gerar a imagem da cena {i}."
-                    )
-                    st.caption(str(erro))
+                buffer = BytesIO()
+
+                imagem.save(
+                    buffer,
+                    format="PNG"
+                )
+
+                st.download_button(
+                    label=f"⬇️ Baixar imagem da cena {numero}",
+                    data=buffer.getvalue(),
+                    file_name=f"cena_{numero}.png",
+                    mime="image/png",
+                    key=f"download_imagem_{numero}"
+                )
+
+        # ==================================
+        # DOWNLOAD DA HISTÓRIA
+        # ==================================
+
+        st.markdown("---")
+
+        st.subheader("📖 História completa")
 
         st.download_button(
-            "📖 Baixar história completa",
-            historia_completa,
+            label="⬇️ Baixar história",
+            data=historia_completa.encode("utf-8"),
             file_name="conto_magico.txt",
-            mime="text/plain",
-            use_container_width=True
+            mime="text/plain"
         )
 
-st.divider()
-st.caption("✨ Contos Mágicos IA")
+        st.success(
+            "✨ História finalizada!"
+        )
+
+
+# ==========================================
+# RODAPÉ
+# ==========================================
+
+st.markdown("---")
+
+st.caption(
+    "✨ Contos Mágicos IA - Criador de histórias infantis"
+)
