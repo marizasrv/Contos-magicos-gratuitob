@@ -18,12 +18,12 @@ st.set_page_config(
 
 st.title("✨ Contos Magicos IA")
 st.write(
-    "Crie historias infantis com imagens em formato YouTube."
+    "Crie historias infantis completas para videos do YouTube."
 )
 
 
 # ==========================================
-# TOKEN
+# TOKEN HUGGING FACE
 # ==========================================
 
 try:
@@ -72,35 +72,35 @@ def limpar_texto(texto):
 
 
 # ==========================================
-# HISTORIA
+# CRIAR HISTORIA
 # ==========================================
 
 def criar_historia(personagem, tema, quantidade):
 
     acontecimentos = [
-        "Uma luz misteriosa apareceu entre as arvores.",
-        "Uma pequena fada apareceu com uma mensagem secreta.",
-        "Uma porta magica surgiu entre as flores.",
-        "Um coelhinho encantado pediu ajuda.",
-        "Um caminho brilhante apareceu na floresta.",
-        "Um castelo surgiu por tras das nuvens.",
-        "Um espelho magico comecou a brilhar.",
-        "Uma estrela caiu perto da personagem.",
-        "Uma chave dourada apareceu entre as folhas."
+        f"{personagem} viu uma luz misteriosa aparecer entre as arvores.",
+        f"Uma pequena fada apareceu diante de {personagem} com uma mensagem secreta.",
+        f"{personagem} encontrou uma porta magica escondida entre as flores.",
+        f"Um coelhinho encantado apareceu e pediu ajuda para {personagem}.",
+        f"Um caminho brilhante surgiu diante de {personagem}.",
+        f"{personagem} viu um castelo magico surgir por tras das nuvens.",
+        f"Um espelho encantado comecou a brilhar diante de {personagem}.",
+        f"Uma estrela brilhante caiu perto de {personagem}.",
+        f"{personagem} encontrou uma pequena chave dourada entre as folhas."
     ]
 
     desafios = [
-        "Para continuar, era preciso resolver um enigma.",
-        "Uma ponte magica havia desaparecido.",
-        "Um feitico escondia o caminho correto.",
-        "A personagem precisava ajudar um novo amigo.",
-        "Uma porta encantada so abriria com coragem."
+        f"Para continuar a aventura, {personagem} precisava resolver um enigma magico.",
+        f"Uma ponte encantada havia desaparecido e {personagem} precisava encontrar outro caminho.",
+        f"Um feitico escondia o caminho correto, mas {personagem} decidiu continuar.",
+        f"{personagem} encontrou um novo amigo que precisava de ajuda.",
+        f"Uma grande porta encantada so poderia ser aberta com coragem."
     ]
 
     finais = [
-        "O misterio foi resolvido e todos comemoraram felizes.",
-        "A magia voltou ao reino e todos ficaram felizes.",
-        "Depois da aventura, a personagem voltou para casa com uma lembranca magica."
+        f"{personagem} resolveu o misterio e todos comemoraram felizes.",
+        f"A magia voltou ao reino e {personagem} percebeu que sua coragem havia salvado aquele lugar.",
+        f"Depois da aventura, {personagem} voltou para casa levando uma lembranca magica e uma historia que jamais esqueceria."
     ]
 
     cenas = []
@@ -133,6 +133,44 @@ def criar_historia(personagem, tema, quantidade):
 
 
 # ==========================================
+# CRIAR FALA
+# ==========================================
+
+def criar_fala(personagem, numero):
+
+    falas = [
+        f"{personagem}: Que lugar lindo! O que sera que vou encontrar aqui?",
+        f"{personagem}: Eu nao vou desistir. Preciso descobrir esse misterio!",
+        f"{personagem}: Uau! Isso parece realmente magico!",
+        f"{personagem}: Vou seguir em frente. Tenho certeza de que existe algo especial aqui.",
+        f"{personagem}: Nao tenha medo. Eu vou ajudar voce!",
+        f"{personagem}: Acho que estou cada vez mais perto de descobrir o segredo.",
+        f"{personagem}: Conseguimos! Que aventura maravilhosa!"
+    ]
+
+    return falas[(numero - 1) % len(falas)]
+
+
+# ==========================================
+# MOVIMENTO PARA VIDEO
+# ==========================================
+
+def criar_movimento(numero):
+
+    movimentos = [
+        "Zoom lento em direcao a personagem enquanto as folhas se movimentam suavemente.",
+        "Camera avanca lentamente pela floresta enquanto pequenas luzes magicas aparecem.",
+        "Movimento suave da camera da esquerda para a direita, mostrando o ambiente encantado.",
+        "A personagem caminha lentamente enquanto a camera acompanha seu movimento.",
+        "Camera aproxima lentamente do objeto magico enquanto ele comeca a brilhar.",
+        "Pequeno movimento cinematografico ao redor da personagem.",
+        "Camera se afasta lentamente mostrando toda a floresta magica."
+    ]
+
+    return movimentos[(numero - 1) % len(movimentos)]
+
+
+# ==========================================
 # GERAR IMAGEM
 # ==========================================
 
@@ -144,35 +182,89 @@ def gerar_imagem(
     descricao_personagem
 ):
 
-    personagem = limpar_texto(personagem)
-    tema = limpar_texto(tema)
-    cena = limpar_texto(cena)
-    descricao_personagem = limpar_texto(
-        descricao_personagem
-    )
+    personagem_limpo = limpar_texto(personagem)
+    tema_limpo = limpar_texto(tema)
+    cena_limpa = limpar_texto(cena)
+    descricao_limpa = limpar_texto(descricao_personagem)
 
     prompt = (
         "Children's animated fairy tale illustration. "
-        f"Main character named {personagem}. "
-        f"Character appearance: {descricao_personagem}. "
+        f"Main character named {personagem_limpo}. "
+        f"Character appearance: {descricao_limpa}. "
         "IMPORTANT: keep exactly the same character appearance, "
-        "same hairstyle, same hair color, same face, "
-        "same dress and same age in every scene. "
-        f"Story theme: {tema}. "
-        f"Scene {numero}: {cena}. "
-        "Beautiful magical forest environment. "
-        "Cute child friendly illustration. "
+        "same hairstyle, same hair color, same eye color, "
+        "same face, same dress, same shoes and same age "
+        "in every scene. "
+        f"Story theme: {tema_limpo}. "
+        f"Scene {numero}: {cena_limpa}. "
+        "Beautiful magical fairy tale environment. "
+        "Cute young child character. "
+        "Child friendly illustration. "
+        "Colorful magical scenery. "
         "Cinematic lighting. "
-        "Detailed storybook art. "
+        "Detailed animated storybook art. "
         "Wide landscape shot. "
-        "YouTube video composition. "
-        "No text. No letters. No captions."
+        "16:9 YouTube video composition. "
+        "No text. No letters. No captions. No watermark."
     )
 
     negative_prompt = (
         "different character, different hairstyle, "
-        "different dress, adult woman, teenager, "
-        "extra fingers, extra arms, duplicate person, "
+        "different hair color, different dress, "
+        "different shoes, adult woman, teenager, "
+        "old person, extra fingers, extra arms, "
+        "duplicate person, deformed face, "
+        "text, letters, subtitles, watermark, logo"
+    )
+
+    imagem = client.text_to_image(
+        prompt=prompt,
+        negative_prompt=negative_prompt,
+        model="black-forest-labs/FLUX.1-schnell",
+        width=1024,
+        height=576,
+        seed=12345
+    )
+
+    return imagem
+
+
+# ==========================================
+# GERAR CAPA
+# ==========================================
+
+def gerar_capa(
+    personagem,
+    tema,
+    descricao_personagem
+):
+
+    personagem_limpo = limpar_texto(personagem)
+    tema_limpo = limpar_texto(tema)
+    descricao_limpa = limpar_texto(descricao_personagem)
+
+    prompt = (
+        "Beautiful children's fairy tale YouTube thumbnail illustration. "
+        f"Main character named {personagem_limpo}. "
+        f"Character appearance: {descricao_limpa}. "
+        f"Story theme: {tema_limpo}. "
+        "The same young child character from the story. "
+        "Character in the center of the image. "
+        "Magical enchanted forest. "
+        "Glowing magical lights. "
+        "Fantasy castle in the distance. "
+        "Colorful cinematic lighting. "
+        "Cute animated children's movie style. "
+        "Highly detailed storybook illustration. "
+        "Wide landscape 16:9 YouTube thumbnail. "
+        "Leave some empty space for adding a title later. "
+        "No text. No letters. No watermark."
+    )
+
+    negative_prompt = (
+        "adult woman, teenager, different character, "
+        "different hairstyle, different dress, "
+        "deformed face, extra arms, extra fingers, "
         "text, letters, watermark, logo"
     )
 
@@ -229,7 +321,7 @@ quantidade = st.slider(
 # ==========================================
 
 if st.button(
-    "✨ Criar historia e imagens",
+    "✨ Criar historia completa",
     use_container_width=True
 ):
 
@@ -254,10 +346,11 @@ if st.button(
         )
 
         st.success(
-            "Historia criada! Gerando imagens..."
+            "Historia criada! Agora vamos gerar as imagens."
         )
 
         historia_completa = ""
+        roteiro_completo = ""
 
         imagens_zip = BytesIO()
 
@@ -266,6 +359,66 @@ if st.button(
             "w",
             zipfile.ZIP_DEFLATED
         ) as arquivo_zip:
+
+            # ==================================
+            # CAPA
+            # ==================================
+
+            st.markdown("---")
+            st.header("🖼️ Capa do YouTube")
+
+            with st.spinner(
+                "Criando a capa..."
+            ):
+
+                try:
+
+                    capa = gerar_capa(
+                        personagem,
+                        tema,
+                        descricao_personagem
+                    )
+
+                    st.image(
+                        capa,
+                        caption="Capa do video",
+                        use_container_width=True
+                    )
+
+                    buffer_capa = BytesIO()
+
+                    capa.save(
+                        buffer_capa,
+                        format="PNG"
+                    )
+
+                    dados_capa = buffer_capa.getvalue()
+
+                    arquivo_zip.writestr(
+                        "capa_youtube.png",
+                        dados_capa
+                    )
+
+                    st.download_button(
+                        label="⬇️ Baixar capa do YouTube",
+                        data=dados_capa,
+                        file_name="capa_youtube.png",
+                        mime="image/png",
+                        key="baixar_capa"
+                    )
+
+                except Exception as erro:
+
+                    st.warning(
+                        "Nao foi possivel gerar a capa."
+                    )
+
+                    st.code(str(erro))
+
+
+            # ==================================
+            # CENAS
+            # ==================================
 
             for numero, cena in enumerate(
                 cenas,
@@ -278,12 +431,52 @@ if st.button(
                     f"🎬 Cena {numero}"
                 )
 
+                # NARRACAO
+
+                st.markdown("### 🎙️ Narradora")
+
                 st.write(cena)
+
+                # FALA
+
+                fala = criar_fala(
+                    personagem,
+                    numero
+                )
+
+                st.markdown("### 💬 Fala")
+
+                st.write(fala)
+
+                # MOVIMENTO
+
+                movimento = criar_movimento(
+                    numero
+                )
+
+                st.markdown("### 🎥 Movimento para o video")
+
+                st.write(movimento)
+
+                # SALVAR ROTEIRO
 
                 historia_completa += (
                     f"CENA {numero}\n"
                     f"{cena}\n\n"
                 )
+
+                roteiro_completo += (
+                    f"CENA {numero}\n\n"
+                    f"NARRADORA:\n"
+                    f"{cena}\n\n"
+                    f"FALA:\n"
+                    f"{fala}\n\n"
+                    f"MOVIMENTO:\n"
+                    f"{movimento}\n\n"
+                    "--------------------\n\n"
+                )
+
+                # IMAGEM
 
                 with st.spinner(
                     f"Gerando imagem da cena {numero}..."
@@ -342,26 +535,44 @@ if st.button(
                         st.code(str(erro))
 
 
+        # ======================================
+        # DOWNLOADS
+        # ======================================
+
         st.markdown("---")
+
+        st.header("📥 Baixar seu projeto")
 
         imagens_zip.seek(0)
 
         st.download_button(
-            label="📦 Baixar todas as imagens",
+            label="📦 Baixar capa + todas as imagens",
             data=imagens_zip.getvalue(),
-            file_name="imagens_contos_magicos.zip",
+            file_name="conto_magico_imagens.zip",
             mime="application/zip",
             use_container_width=True
         )
 
         st.download_button(
-            label="📖 Baixar historia completa",
+            label="📖 Baixar historia",
             data=historia_completa,
             file_name="conto_magico.txt",
             mime="text/plain",
             use_container_width=True
         )
 
+        st.download_button(
+            label="🎬 Baixar roteiro completo",
+            data=roteiro_completo,
+            file_name="roteiro_video.txt",
+            mime="text/plain",
+            use_container_width=True
+        )
+
+
+# ==========================================
+# RODAPE
+# ==========================================
 
 st.markdown("---")
 
