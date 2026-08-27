@@ -1,14 +1,28 @@
 import streamlit as st
+from huggingface_hub import InferenceClient
+from io import BytesIO
 import random
 
 st.set_page_config(
-    page_title="Contos Mágicos IA Grátis",
-    page_icon="🪄",
+    page_title="Contos Mágicos IA",
+    page_icon="✨",
     layout="centered"
 )
 
-st.title("🪄 Contos Mágicos IA Grátis")
-st.write("Crie histórias infantis e cenas para vídeos gratuitamente.")
+st.title("✨ Contos Mágicos IA")
+st.write("Crie histórias infantis com imagens para cada cena.")
+
+# Chave guardada nos Secrets do Streamlit
+try:
+    HF_TOKEN = st.secrets["HF_TOKEN"]
+except Exception:
+    st.error("A chave HF_TOKEN não foi encontrada nos Secrets do Streamlit.")
+    st.stop()
+
+client = InferenceClient(
+    provider="auto",
+    api_key=HF_TOKEN
+)
 
 nome = st.text_input(
     "Nome do personagem principal",
@@ -28,7 +42,7 @@ tipo = st.selectbox(
 
 tema = st.text_input(
     "Tema da história",
-    placeholder="Exemplo: uma floresta encantada"
+    placeholder="Exemplo: Luna e o espelho mágico"
 )
 
 numero_cenas = st.slider(
@@ -38,13 +52,13 @@ numero_cenas = st.slider(
     value=8
 )
 
-def criar_historia(personagem, tema_historia, estilo, cenas):
+def criar_historia(personagem, tema_historia, estilo, quantidade):
     lugares = [
         "uma floresta encantada",
         "um castelo escondido entre as nuvens",
         "uma vila iluminada pela lua",
         "um jardim cheio de flores mágicas",
-        "uma montanha onde viviam pequenas fadas"
+        "uma montanha onde vivem pequenas fadas"
     ]
 
     amigos = [
@@ -55,67 +69,57 @@ def criar_historia(personagem, tema_historia, estilo, cenas):
         "uma coruja sábia"
     ]
 
-    objeto = [
-        "uma chave dourada",
-        "um cristal luminoso",
-        "um livro encantado",
-        "uma pequena lanterna mágica",
-        "uma coroa de estrelas"
-    ]
-
     lugar = tema_historia if tema_historia else random.choice(lugares)
     amigo = random.choice(amigos)
-    item = random.choice(objeto)
 
-    historia = []
+    cenas = [
+        f"Era uma vez {personagem}, uma criança curiosa que vivia perto de {lugar}.",
+        f"Certa noite, {personagem} viu uma luz misteriosa brilhando ao longe.",
+        f"No caminho, {personagem} encontrou {amigo}, que decidiu acompanhar a aventura.",
+        f"Juntos descobriram uma passagem secreta para um mundo cheio de magia.",
+        f"{personagem} encontrou um objeto mágico escondido entre árvores brilhantes.",
+        f"Um pequeno desafio apareceu, mas {personagem} decidiu enfrentá-lo com coragem.",
+        f"Com a ajuda de {amigo}, o mistério começou a ser resolvido.",
+        f"A magia voltou a iluminar todo o lugar.",
+        f"{personagem} percebeu que amizade e coragem eram a verdadeira magia.",
+        f"Depois da aventura, {personagem} voltou feliz para casa. Fim."
+    ]
 
-    historia.append(
-        f"Era uma vez {personagem}, uma criança muito curiosa que vivia perto de {lugar}."
+    while len(cenas) < quantidade:
+        cenas.insert(
+            -1,
+            f"{personagem} continuou explorando o mundo encantado e encontrou uma nova surpresa."
+        )
+
+    return cenas[:quantidade]
+
+
+def gerar_imagem(cena, personagem):
+    prompt = (
+        f"Children's fairy tale illustration. "
+        f"Main character: {personagem}, a cute young child. "
+        f"Scene: {cena}. "
+        f"Magical fantasy world, cinematic lighting, "
+        f"beautiful colorful children's storybook illustration, "
+        f"consistent character design, high quality, "
+        f"landscape 16:9 composition, no text, no captions."
     )
 
-    historia.append(
-        f"Certa noite, {personagem} percebeu uma luz misteriosa brilhando ao longe e decidiu descobrir de onde ela vinha."
+    imagem = client.text_to_image(
+        prompt,
+        model="black-forest-labs/FLUX.1-schnell",
+        width=1024,
+        height=576
     )
 
-    historia.append(
-        f"No caminho, encontrou {amigo}, que contou que algo mágico havia acontecido naquele lugar."
-    )
-
-    historia.append(
-        f"Juntos, eles encontraram {item}, mas para descobrir seu segredo precisariam seguir um caminho cheio de magia e pequenas surpresas."
-    )
-
-    historia.append(
-        f"{personagem} sentiu um pouco de medo, mas continuou avançando com coragem."
-    )
-
-    historia.append(
-        f"Depois de atravessar o caminho encantado, descobriram que {item} poderia devolver a luz e a alegria ao lugar."
-    )
-
-    historia.append(
-        f"{personagem} usou sua bondade e inteligência para resolver o mistério."
-    )
-
-    historia.append(
-        f"Quando tudo terminou, o lugar voltou a brilhar e todos comemoraram."
-    )
-
-    historia.append(
-        f"{personagem} voltou para casa levando uma lembrança daquela aventura e sabendo que a verdadeira magia estava na coragem e na amizade."
-    )
-
-    historia.append(
-        "E assim terminou mais uma aventura mágica. Fim."
-    )
-
-    return historia[:cenas]
+    return imagem, prompt
 
 
-if st.button("✨ Criar história", use_container_width=True):
+if st.button("✨ Criar história e imagens", use_container_width=True):
 
     if not nome:
-        st.warning("Digite o nome do personagem.")
+        st.warning("Digite o nome do personagem principal.")
+
     else:
         cenas = criar_historia(
             nome,
@@ -124,7 +128,7 @@ if st.button("✨ Criar história", use_container_width=True):
             numero_cenas
         )
 
-        st.success("História criada!")
+        st.success("História criada! Agora vamos gerar as imagens.")
 
         historia_completa = ""
 
@@ -133,28 +137,47 @@ if st.button("✨ Criar história", use_container_width=True):
             st.subheader(f"🎬 Cena {i}")
             st.write(cena)
 
-            prompt = (
-                f"Ilustração infantil cinematográfica, personagem chamado {nome}, "
-                f"{cena}, cenário mágico, conto de fadas, iluminação suave, "
-                f"cores encantadoras, alta qualidade, formato 16:9, "
-                f"sem texto e sem legendas."
-            )
-
-            with st.expander("🎨 Prompt para imagem/vídeo"):
-                st.code(prompt)
-
             historia_completa += f"Cena {i}\n{cena}\n\n"
 
+            with st.spinner(f"🎨 Criando imagem da cena {i}..."):
+
+                try:
+                    imagem, prompt = gerar_imagem(cena, nome)
+
+                    st.image(
+                        imagem,
+                        caption=f"Cena {i}",
+                        use_container_width=True
+                    )
+
+                    buffer = BytesIO()
+                    imagem.save(buffer, format="PNG")
+                    dados_imagem = buffer.getvalue()
+
+                    st.download_button(
+                        f"📥 Baixar imagem da cena {i}",
+                        data=dados_imagem,
+                        file_name=f"cena_{i}.png",
+                        mime="image/png",
+                        key=f"download_{i}"
+                    )
+
+                    with st.expander("🎨 Ver prompt da imagem"):
+                        st.write(prompt)
+
+                except Exception as erro:
+                    st.error(
+                        f"Não foi possível gerar a imagem da cena {i}."
+                    )
+                    st.caption(str(erro))
+
         st.download_button(
-            "📥 Baixar história",
+            "📖 Baixar história completa",
             historia_completa,
             file_name="conto_magico.txt",
             mime="text/plain",
             use_container_width=True
         )
 
-
 st.divider()
-
-st.write("💜 Feito para criar contos e preparar cenas para vídeos.")
-st.caption("Não precisa de chave da OpenAI.")
+st.caption("✨ Contos Mágicos IA")
