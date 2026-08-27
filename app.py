@@ -94,15 +94,14 @@ def criar_historia(personagem, tema_historia, estilo, quantidade):
     return cenas[:quantidade]
 
 
-def gerar_imagem(cena, personagem):
+def gerar_imagem(def gerar_imagem(cena, personagem):
+    cena = cena.replace("…", "...").replace("—", "-").replace("–", "-")
+    personagem = personagem.replace("…", "...").replace("—", "-").replace("–", "-")
+
     prompt = (
         f"Children's fairy tale illustration. "
         f"Main character: {personagem}, a cute young child. "
         f"Scene: {cena}. "
-        f"Magical fantasy world, cinematic lighting, "
-        f"beautiful colorful children's storybook illustration, "
-        f"consistent character design, high quality, "
-        f"landscape 16:9 composition, no text, no captions."
     )
 
     imagem = client.text_to_image(
